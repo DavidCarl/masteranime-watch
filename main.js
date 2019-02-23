@@ -1,17 +1,25 @@
 myStorage = window.localStorage;
 
-console.log('ADDON: Loaded!')
+var LoadAnimeInfo = null;
 
-let url = window.location.href;
+function main() {
+    let url = window.location.href;
 
-if (url.match('masterani.me\/anime\/watch.+')) {
-    removeAd();
-    console.log('ADDON: Anime Watch page!');
-} else if(url.match('masterani.me\/anime\/info.+')) {
-    clear_data()
-    console.log('ADDON: Anime Info page!');
-}else{
-    console.log('ADDON: Fail');
+    if (url.match('masterani.me\/anime\/watch.+')) {
+        removeAd();
+        console.log('ADDON: Anime Watch page!');
+    } else if (url.match('masterani.me\/anime\/info.+')) {
+        try {
+            LoadAnimeInfo = setInterval(function () { main_info(); }, 100);
+            //This should work, just need to find a way to break it!
+        } catch (error) {
+            console.log('ADDON: ' + error)
+        }
+        console.log('ADDON: Anime Info page!');
+    } else {
+        console.log('ADDON: Fail');
+    }
+    console.log('ADDON: Loaded!')
 }
 
 function removeAd() {
@@ -124,16 +132,56 @@ function remove_array_element(arr, n) {
     return sarr;
 }
 
-
 function clear_data() {
-    anime_titel = document.getElementsByClassName('right floated sixteen wide mobile ten wide tablet twelve wide computer column')[0].children[0].childNodes[0].data
+    document.getElementById('addasremove_data').addEventListener('click', function () {
+        if (confirm('Are you sure you want to delete progress for this anime?')) {
+            anime_titel = document.getElementsByClassName('right floated sixteen wide mobile ten wide tablet twelve wide computer column')
+            let regex = /[ \t]+$/
+            title = anime_titel[0].children[0].childNodes[0].data.replace(regex, '')
+            myStorage.setItem(title, '')
+            main_info()
+        } else {
+            console.log('noty!')
+        }
+    });
+}
+
+function main_info() {
+    thumbnail_blur = document.getElementsByClassName('thumbnail blur')
+    anime_titel = document.getElementsByClassName('right floated sixteen wide mobile ten wide tablet twelve wide computer column')
+    title = anime_titel[0].children[0].childNodes[0].data
     let regex = /[ \t]+$/
-    console.log(myStorage.getItem(anime_titel.replace(regex, '')))
-    console.log(anime_titel.replace(regex, ''))
+    let watched = myStorage.getItem(title.replace(regex, ''))
+    //console.log(title.replace(regex, ''))
+    try {
+        if(document.getElementById('addasremove_data') == undefined){
+            var button = document.createElement('button');
+            button.className = "item";
+            button.style = "background-color: rgba(0, 0, 0, 0);"
+            button.id = 'addasremove_data';
+            button.appendChild(document.createTextNode('Remove all watch status'));
+        }
+    } catch (error) {
+        
+    }
+    document.getElementsByClassName('ui tag horizontal list')[0].appendChild(button);
+    try {
+        for (let item of thumbnail_blur) {
+            let info = item.children[1].children[0]
+            let ep = info.children[1].innerHTML.match('\\d+')[0]
+            if (watched.includes(ep)) {
+                info.children[0].style.color = "green"
+            } else {
+                info.children[0].style.color = "red"
+            }
+        }
+    } catch (error) {
+        
+    }
+    clear_data()
+    if (title != "") {
+        clearInterval(LoadAnimeInfo)
+    }
 }
 
-
-
-function main_info(){
-    title = document.getElementsByClassName('title')
-}
+main()
